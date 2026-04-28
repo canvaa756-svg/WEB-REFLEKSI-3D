@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>RefleksiMaster 3D - Pencerminan Realistis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 8px;
+            overflow-x: hidden;
+        }
+
+        /* Container utama - landscape friendly */
+        .refleksi-container {
+            max-width: 1400px;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.3);
+            margin: 0 auto;
+            overflow: hidden;
+            height: calc(100vh - 16px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .header h1 i {
+            color: #10b981;
+            margin-right: 8px;
+        }
+
+        .header p {
+            color: #aaa;
+            margin-top: 2px;
+            font-size: 0.7rem;
+        }
+
+        /* Layout utama - landscape mode */
+        .refleksi-wrapper {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            min-height: 0;
+            gap: 0;
+        }
+
+        .canvas-container {
+            flex: 2;
+            background: #1a1a2e;
+            padding: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #ar-3d-view {
+            width: 100%;
+            flex: 1;
+            position: relative;
+            background: #1a1a2e;
+            border-radius: 15px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        #ar-3d-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            padding: 6px 12px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 5px;
+            font-size: 9px;
+            z-index: 10;
+        }
+
+        .info-item {
+            color: white;
+        }
+
+        .info-item span:first-child {
+            color: #10b981;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 9px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+
+        .color-box.original { 
+            background: #10b981;
+            box-shadow: 0 0 3px rgba(16,185,129,0.5);
+        }
+        .color-box.reflected { 
+            background: #f59e0b;
+            box-shadow: 0 0 3px rgba(245,158,11,0.5);
+        }
+        .color-box.mirror { 
+            background: #ff6666;
+            box-shadow: 0 0 3px rgba(255,102,102,0.5);
+        }
+
+        /* Sidebar kanan - scrollable untuk HP */
+        .control-panel {
+            width: 280px;
+            background: #f0f4f8;
+            overflow-y: auto;
+            flex-shrink: 0;
+            padding: 12px;
+        }
+
+        .panel-section {
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .panel-section h3 {
+            font-family: 'Poppins', sans-serif;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #10b981;
+            padding-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .shape-category {
+            margin-bottom: 6px;
+            margin-top: 8px;
+            padding: 3px 8px;
+            background: #f0f4f8;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 0.7rem;
+        }
+
+        .shape-category:first-of-type {
+            margin-top: 0;
+        }
+
+        .shape-selector {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .shape-btn {
+            padding: 4px 8px;
+            background: white;
+            border: 1.5px solid #1a1a2e;
+            color: #1a1a2e;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.65rem;
+        }
+
+        .shape-btn.active {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .shape-btn i {
+            margin-right: 3px;
+            font-size: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 8px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 6px 10px;
+            background: #f8fafc;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .coord-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .coord-row .input-group {
+            flex: 1;
+        }
+
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 12px;
+        }
+
+        button:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        button.secondary {
+            background: #3b82f6;
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        .mirror-types {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .mirror-type {
+            padding: 6px;
+            border: 1.5px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: 0.7rem;
+        }
+
+        .mirror-type.active {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .formula-display {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 8px 0;
+        }
+
+        .formula-content {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #10b981;
+            font-family: monospace;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #f0f4f8 0%, #e0e8f0 100%);
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .result-box h4 {
+            color: #1a1a2e;
+            margin-bottom: 5px;
+            font-size: 0.75rem;
+        }
+
+        .result-coord {
+            font-size: 0.85rem;
+            font-weight: bold;
+            font-family: monospace;
+            text-align: center;
+            background: white;
+            padding: 6px;
+            border-radius: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+        }
+
+        .penyelesaian-box {
+            background: white;
+            border-radius: 10px;
+            padding: 8px;
+            margin-top: 6px;
+            border-left: 3px solid #f39c12;
+        }
+
+        .penyelesaian-step {
+            font-family: monospace;
+            font-size: 0.7rem;
+            line-height: 1.4;
+        }
+
+        .coord-preview {
+            margin-top: 6px;
+            padding: 5px;
+            background: #e8f8f5;
+            border-radius: 6px;
+            font-size: 9px;
+            text-align: center;
+            color: #0d9488;
+        }
+
+        /* Scrollbar styling untuk HP */
+        .control-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .control-panel::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb {
+            background: #10b981;
+            border-radius: 4px;
+        }
+
+        /* Responsive untuk HP landscape */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .refleksi-wrapper {
+                flex-direction: row;
+            }
+            .control-panel {
+                width: 260px;
+            }
+            .header h1 {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 700px) and (orientation: portrait) {
+            .refleksi-wrapper {
+                flex-direction: column;
+            }
+            .control-panel {
+                width: 100%;
+                max-height: 40vh;
+            }
+            .canvas-container {
+                min-height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="refleksi-container">
+    <div class="header">
+        <h1><i class="fas fa-cube"></i> REFLEKSI MASTER 3D</h1>
+        <p>Pencerminan Bangun Datar, Bangun Ruang & Benda Sehari-hari 3D Realistis</p>
+    </div>
+
+    <div class="refleksi-wrapper">
+        <div class="canvas-container">
+            <div id="ar-3d-view">
+                <canvas id="ar-3d-canvas"></canvas>
+            </div>
+            <div class="info-panel">
+                <div class="info-item"><span>🖱️</span> Drag: rotasi | Geser: zoom</div>
+                <div class="info-item"><span>📏</span> Kamera otomatis menyesuaikan</div>
+                <div class="info-item"><span>🪞</span> Garis merah = sumbu cermin</div>
+            </div>
+            <div class="legend">
+                <div class="legend-item"><div class="color-box original"></div> OBJEK ASLI</div>
+                <div class="legend-item"><div class="color-box reflected"></div> HASIL REFLEKSI</div>
+                <div class="legend-item"><div class="color-box mirror"></div> GARIS CERMIN</div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <!-- Pilih Objek -->
+            <div class="panel-section">
+                <h3><i class="fas fa-shapes"></i> Pilih Objek</h3>
+                
+                <div class="shape-category"><i class="fas fa-square"></i> BANGUN DATAR (2D)</div>
+                <div class="shape-selector">
+                    <button id="shapeSegitiga" class="shape-btn"><i class="fas fa-triangle"></i> Segitiga</button>
+                    <button id="shapePersegi" class="shape-btn"><i class="fas fa-square"></i> Persegi</button>
+                    <button id="shapeLingkaran" class="shape-btn"><i class="fas fa-circle"></i> Lingkaran</button>
+                </div>
+
+                <div class="shape-category"><i class="fas fa-cube"></i> BANGUN RUANG 3D</div>
+                <div class="shape-selector">
+                    <button id="shapeCube" class="shape-btn active"><i class="fas fa-cube"></i> Kubus</button>
+                    <button id="shapeBalok" class="shape-btn"><i class="fas fa-cube"></i> Balok</button>
+                    <button id="shapePrisma" class="shape-btn"><i class="fas fa-chart-line"></i> Prisma</button>
+                    <button id="shapeLimas" class="shape-btn"><i class="fas fa-chart-pie"></i> Limas</button>
+                    <button id="shapeBola" class="shape-btn"><i class="fas fa-futbol"></i> Bola</button>
+                </div>
+
+                <div class="shape-category"><i class="fas fa-home"></i> BENDA SEHARI-HARI</div>
+                <div class="shape-selector">
+                    <button id="shapeMeja" class="shape-btn"><i class="fas fa-chair"></i> Meja</button>
+                    <button id="shapeKursi" class="shape-btn"><i class="fas fa-chair"></i> Kursi</button>
+                    <button id="shapeLemari" class="shape-btn"><i class="fas fa-wardrobe"></i> Lemari</button>
+                    <button id="shapeKulkas" class="shape-btn"><i class="fas fa-thermometer-half"></i> Kulkas</button>
+                    <button id="shapeMobil" class="shape-btn"><i class="fas fa-car"></i> Mobil</button>
+                    <button id="shapeTV" class="shape-btn"><i class="fas fa-tv"></i> TV</button>
+                    <button id="shapeLaptop" class="shape-btn"><i class="fas fa-laptop"></i> Laptop</button>
+                </div>
+            </div>
+
+            <!-- Input Koordinat -->
+            <div class="panel-section">
+                <h3><i class="fas fa-map-marker-alt"></i> Input Koordinat & Ukuran</h3>
+                
+                <div id="datarInput" class="input-group">
+                    <label>Pusat Objek (X, Y)</label>
+                    <div class="coord-row">
+                        <input type="number" id="datarX" value="2" step="0.5" placeholder="X">
+                        <input type="number" id="datarY" value="1.5" step="0.5" placeholder="Y">
+                    </div>
+                    <label style="margin-top: 6px;">Ukuran (Lebar, Tinggi)</label>
+                    <div class="coord-row">
+                        <input type="number" id="datarW" value="1.5" step="0.2" placeholder="Lebar">
+                        <input type="number" id="datarH" value="1.5" step="0.2" placeholder="Tinggi">
+                    </div>
+                    <div class="coord-preview" id="datarPreview">📌 Posisi: (2, 1.5) | Ukuran: 1.5 x 1.5</div>
+                </div>
+
+                <div id="ruangInput" class="input-group">
+                    <label>Pusat Objek (X, Y)</label>
+                    <div class="coord-row">
+                        <input type="number" id="ruangX" value="2" step="0.5" placeholder="X">
+                        <input type="number" id="ruangY" value="1.5" step="0.5" placeholder="Y">
+                    </div>
+                    <label style="margin-top: 6px;">Ukuran (Lebar, Tinggi, Kedalaman)</label>
+                    <div class="coord-row">
+                        <input type="number" id="ruangW" value="1.5" step="0.2" placeholder="Lebar">
+                        <input type="number" id="ruangH" value="1.5" step="0.2" placeholder="Tinggi">
+                        <input type="number" id="ruangD" value="1.5" step="0.2" placeholder="Kedalaman">
+                    </div>
+                    <div class="coord-preview" id="ruangPreview">📌 Posisi: (2, 1.5) | Ukuran: 1.5 x 1.5 x 1.5</div>
+                </div>
+
+                <button id="applyShapeBtn" style="margin-top: 8px;"><i class="fas fa-check"></i> Terapkan Objek</button>
+                <button id="resetShapeBtn" style="margin-top: 5px; background: #64748b;"><i class="fas fa-undo"></i> Reset Posisi (0,0)</button>
+            </div>
+
+            <!-- Pilih Garis Cermin -->
+            <div class="panel-section">
+                <h3><i class="fas fa-mirror"></i> Pilih Garis Cermin</h3>
+                <div class="mirror-types">
+                    <button class="mirror-type active" data-axis="y"><i class="fas fa-arrows-alt-h"></i> Sumbu Y</button>
+                    <button class="mirror-type" data-axis="x"><i class="fas fa-arrows-alt-v"></i> Sumbu X</button>
+                    <button class="mirror-type" data-axis="z"><i class="fas fa-arrows-alt"></i> Sumbu Z</button>
+                    <button class="mirror-type" data-axis="y=x"><i class="fas fa-exchange-alt"></i> y = x</button>
+                </div>
+                <div class="formula-display">
+                    <div class="formula-content" id="formulaText">(x, y, z) → (-x, y, z)</div>
+                </div>
+                <button id="reflectBtn" class="btn-reflect"><i class="fas fa-play"></i> REFLEKSIKAN</button>
+            </div>
+
+            <!-- Hasil Perhitungan -->
+            <div class="panel-section">
+                <h3><i class="fas fa-chart-line"></i> Hasil Perhitungan</h3>
+                <div class="result-box">
+                    <div class="result-coord" style="background: #10b98110; border-color: #10b981;" id="rumus-text">(x, y, z) → (-x, y, z)</div>
+                    <div class="result-coord" style="background: #f59e0b10; border-color: #f59e0b;" id="hasil-text">-</div>
+                </div>
+                <div class="penyelesaian-box" id="penyelesaianBox">
+                    <div class="penyelesaian-step" id="penyelesaianStep">Klik "Refleksikan" untuk melihat langkah-langkah</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // ============= DATA =============
+    let currentCategory = 'ruang';
+    let currentShape = 'cube';
+    let shapeData = {
+        center: { x: 2, y: 1.5, z: 0 },
+        size: { w: 1.5, h: 1.5, d: 1.5 },
+        radius: 0.8
+    };
+    let reflectedCenter = null;
+    let currentAxis = 'y';
+    let isReflected = false;
+    
+    const COLOR_ORIGINAL = 0x10b981;
+    const COLOR_REFLECTED = 0xf59e0b;
+    const COLOR_ORIGINAL_EMISSIVE = 0x064e3b;
+    const COLOR_REFLECTED_EMISSIVE = 0x7c2d12;
+    
+    let mainObject = null;
+    let reflectedObject = null;
+    let connectorLine = null;
+    let labelRenderer = null;
+    let axisLabels = [];
+    let controls = null;
+    let camera = null;
+    let scene = null;
+    let renderer = null;
+    
+    // ============= INISIALISASI =============
+    const canvas = document.getElementById('ar-3d-canvas');
+    const container = canvas.parentElement;
+    
+    function resizeCanvas() {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        canvas.width = width;
+        canvas.height = height;
+        return { width, height };
+    }
+    
+    let { width, height } = resizeCanvas();
+    
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+    scene.fog = new THREE.FogExp2(0x1a1a2e, 0.008);
+    
+    camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    camera.position.set(6, 5, 7);
+    camera.lookAt(0, 0, 0);
+    
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    
+    labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(width, height);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.getElementById('ar-3d-view').appendChild(labelRenderer.domElement);
+    
+    controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1;
+    controls.enablePan = true;
+    controls.rotateSpeed = 1;
+    controls.touchRotate = true;
+    controls.touchZoom = true;
+    
+    // ============= UPDATE PREVIEW =============
+    function updatePreview() {
+        if (currentCategory === 'datar') {
+            const x = parseFloat(document.getElementById('datarX').value) || 0;
+            const y = parseFloat(document.getElementById('datarY').value) || 0;
+            const w = parseFloat(document.getElementById('datarW').value) || 1;
+            const h = parseFloat(document.getElementById('datarH').value) || 1;
+            document.getElementById('datarPreview').innerHTML = `📌 Posisi: (${x}, ${y}) | Ukuran: ${w} x ${h}`;
+        } else {
+            const x = parseFloat(document.getElementById('ruangX').value) || 0;
+            const y = parseFloat(document.getElementById('ruangY').value) || 0;
+            const w = parseFloat(document.getElementById('ruangW').value) || 1;
+            const h = parseFloat(document.getElementById('ruangH').value) || 1;
+            const d = parseFloat(document.getElementById('ruangD').value) || 1;
+            document.getElementById('ruangPreview').innerHTML = `📌 Posisi: (${x}, ${y}) | Ukuran: ${w} x ${h} x ${d}`;
+        }
+    }
+    
+    // ============= LABEL SUMBU =============
+    function updateAxisLabels() {
+        axisLabels.forEach(label => { if(label) scene.remove(label); });
+        axisLabels = [];
+        
+        const range = 6;
+        
+        for(let x = -range; x <= range; x++) {
+            if(Math.abs(x) < 0.1) continue;
+            const div = document.createElement('div');
+            div.textContent = x;
+            div.style.cssText = `color: #88aaff; font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.5); padding: 2px 4px; border-radius: 4px;`;
+            const label = new CSS2DObject(div);
+            label.position.set(x, -0.2, 0);
+            scene.add(label);
+            axisLabels.push(label);
+        }
+        
+        for(let y = -range; y <= range; y++) {
+            if(Math.abs(y) < 0.1) continue;
+            const div = document.createElement('div');
+            div.textContent = y;
+            div.style.cssText = `color: #88aaff; font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.5); padding: 2px 4px; border-radius: 4px;`;
+            const label = new CSS2DObject(div);
+            label.position.set(-0.3, y, 0);
+            scene.add(label);
+            axisLabels.push(label);
+        }
+        
+        const originDiv = document.createElement('div');
+        originDiv.textContent = '0';
+        originDiv.style.cssText = `color: #ff8888; font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 20px; border: 1px solid #ff8888;`;
+        const originLabel = new CSS2DObject(originDiv);
+        originLabel.position.set(-0.2, -0.2, 0);
+        scene.add(originLabel);
+        axisLabels.push(originLabel);
+        
+        updateObjectLabels();
+    }
+    
+    function updateObjectLabels() {
+        axisLabels = axisLabels.filter(label => {
+            if(label && label.element && (label.element.textContent === 'A' || label.element.textContent === "A'")) {
+                scene.remove(label);
+                return false;
+            }
+            return true;
+        });
+        
+        const originalDiv = document.createElement('div');
+        originalDiv.textContent = `A (${shapeData.center.x}, ${shapeData.center.y})`;
+        originalDiv.style.cssText = `color: #10b981; font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 20px; border: 1px solid #10b981; white-space: nowrap;`;
+        const originalLabel = new CSS2DObject(originalDiv);
+        originalLabel.position.set(shapeData.center.x, shapeData.center.y + 0.8, 0);
+        scene.add(originalLabel);
+        axisLabels.push(originalLabel);
+        
+        if(isReflected && reflectedCenter) {
+            const reflectedDiv = document.createElement('div');
+            reflectedDiv.textContent = `A' (${reflectedCenter.x}, ${reflectedCenter.y})`;
+            reflectedDiv.style.cssText = `color: #f59e0b; font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 20px; border: 1px solid #f59e0b; white-space: nowrap;`;
+            const reflectedLabel = new CSS2DObject(reflectedDiv);
+            reflectedLabel.position.set(reflectedCenter.x, reflectedCenter.y + 0.8, 0);
+            scene.add(reflectedLabel);
+            axisLabels.push(reflectedLabel);
+        }
+    }
+    
+    // ============= FUNGSI REFLEKSI =============
+    function getReflectionFormula(axis) {
+        const formulas = {
+            'y': { rumus: "(x, y, z) → (-x, y, z)", transform: (p) => ({ x: -p.x, y: p.y, z: p.z }) },
+            'x': { rumus: "(x, y, z) → (x, -y, z)", transform: (p) => ({ x: p.x, y: -p.y, z: p.z }) },
+            'z': { rumus: "(x, y, z) → (x, y, -z)", transform: (p) => ({ x: p.x, y: p.y, z: -p.z }) },
+            'y=x': { rumus: "(x, y, z) → (y, x, z)", transform: (p) => ({ x: p.y, y: p.x, z: p.z }) }
+        };
+        return formulas[axis];
+    }
+    
+    function reflectPoint(point, axis) {
+        const formula = getReflectionFormula(axis);
+        return formula.transform(point);
+    }
+    
+    // ============= MEMBUAT OBJEK =============
+    function createSegitiga(center, size, color, opacity = 1) {
+        const shape = new THREE.Shape();
+        shape.moveTo(0, size.h/2);
+        shape.lineTo(-size.w/2, -size.h/2);
+        shape.lineTo(size.w/2, -size.h/2);
+        shape.closePath();
+        const geometry = new THREE.ShapeGeometry(shape);
+        const material = new THREE.MeshStandardMaterial({ color: color, side: THREE.DoubleSide, transparent: opacity < 1, opacity: opacity });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(center.x, center.y, center.z);
+        mesh.rotation.x = -Math.PI / 2;
+        return mesh;
+    }
+    
+    function createPersegi(center, size, color, opacity = 1) {
+        const geometry = new THREE.BoxGeometry(size.w, size.h, 0.05);
+        const material = new THREE.MeshStandardMaterial({ color: color, transparent: opacity < 1, opacity: opacity });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(center.x, center.y, center.z);
+        return mesh;
+    }
+    
+    function createLingkaran(center, size, color, opacity = 1) {
+        const geometry = new THREE.CylinderGeometry(size.w, size.w, 0.05, 64);
+        const material = new THREE.MeshStandardMaterial({ color: color, transparent: opacity < 1, opacity: opacity });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(center.x, center.y, center.z);
+        return mesh;
+    }
+    
+    function createCube(center, size, color, emissive, opacity = 1) {
+        const geometry = new THREE.BoxGeometry(size.w, size.h, size.d);
+        const material = new THREE.MeshStandardMaterial({ color: color, metalness: 0.4, roughness: 0.3, emissive: emissive, emissiveIntensity: 0.1, transparent: opacity < 1, opacity: opacity });
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.set(center.x, center.y, center.z);
+        cube.castShadow = true;
+        return cube;
+    }
+    
+    function createBalok(center, size, color, emissive, opacity = 1) {
+        const geometry = new THREE.BoxGeometry(size.w, size.h, size.d);
+        const material = new THREE.MeshStandardMaterial({ color: color, metalness: 0.3, roughness: 0.4, emissive: emissive, emissiveIntensity: 0.1, transparent: opacity < 1, opacity: opacity });
+        const balok = new THREE.Mesh(geometry, material);
+        balok.position.set(center.x, center.y, center.z);
+        balok.castShadow = true;
+        return balok;
+    }
+    
+    function createPrisma(center, size, color, emissive, opacity = 1) {
+        const geometry = new THREE.CylinderGeometry(size.w/1.5, size.w/1.5, size.h, 3);
+        const material = new THREE.MeshStandardMaterial({ color: color, metalness: 0.3, roughness: 0.4, emissive: emissive, emissiveIntensity: 0.1, transparent: opacity < 1, opacity: opacity });
+        const prisma = new THREE.Mesh(geometry, material);
+        prisma.position.set(center.x, center.y, center.z);
+        prisma.castShadow = true;
+        return prisma;
+    }
+    
+    function createLimas(center, size, color, emissive, opacity = 1) {
+        const geometry = new THREE.ConeGeometry(size.w/1.5, size.h, 4);
+        const material = new THREE.MeshStandardMaterial({ color: color, metalness: 0.3, roughness: 0.4, emissive: emissive, emissiveIntensity: 0.1, transparent: opacity < 1, opacity: opacity });
+        const limas = new THREE.Mesh(geometry, material);
+        limas.position.set(center.x, center.y, center.z);
+        limas.castShadow = true;
+        return limas;
+    }
+    
+    function createBola(center, radius, color, emissive, opacity = 1) {
+        const geometry = new THREE.SphereGeometry(radius, 64, 64);
+        const material = new THREE.MeshStandardMaterial({ color: color, metalness: 0.4, roughness: 0.2, emissive: emissive, emissiveIntensity: 0.15, transparent: opacity < 1, opacity: opacity });
+        const bola = new THREE.Mesh(geometry, material);
+        bola.position.set(center.x, center.y, center.z);
+        bola.castShadow = true;
+        return bola;
+    }
+    
+    function createMeja(center, size, color, emissive, opacity = 1) {
+        const group = new THREE.Group();
+        const topGeo = new THREE.BoxGeometry(size.w, size.h*0.1, size.d);
+        const topMat = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+        const top = new THREE.Mesh(topGeo, topMat);
+        top.position.set(0, size.h/2 - size.h*0.05, 0);
+        group.add(top);
+        
+        const legGeo = new THREE.BoxGeometry(size.w*0.1, size.h*0.7, size.w*0.1);
+        const legMat = new THREE.MeshStandardMaterial({ color: 0xA0522D });
+        [[-size.w/2.5, -size.h*0.2, -size.d/2.5], [size.w/2.5, -size.h*0.2, -size.d/2.5],
+         [-size.w/2.5, -size.h*0.2, size.d/2.5], [size.w/2.5, -size.h*0.2, size.d/2.5]].forEach(pos => {
+            const leg = new THREE.Mesh(legGeo, legMat);
+            leg.position.set(pos[0], pos[1], pos[2]);
+            group.add(leg);
+        });
+        group.position.set(center.x, center.y, center.z);
+        return group;
+    }
+    
+    function createKursi(center, size, color, emissive, opacity = 1) {
+        const group = new THREE.Group();
+        const seatGeo = new THREE.BoxGeometry(size.w, size.h*0.12, size.d);
+        const seatMat = new THREE.MeshStandardMaterial({ color: 0xA0522D });
+        const seat = new THREE.Mesh(seatGeo, seatMat);
+        seat.position.set(0, 0, 0);
+        group.add(seat);
+        
+        const backGeo = new THREE.BoxGeometry(size.w, size.h*0.4, size.w*0.08);
+        const backMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+        const back = new THREE.Mesh(backGeo, backMat);
+        back.position.set(0, size.h*0.28, -size.d/2 + 0.05);
+        group.add(back);
+        
+        const legGeo = new THREE.BoxGeometry(size.w*0.1, size.h*0.35, size.w*0.1);
+        const legMat = new THREE.MeshStandardMaterial({ color: 0x654321 });
+        [[-size.w/2.5, -size.h*0.15, -size.d/2.5], [size.w/2.5, -size.h*0.15, -size.d/2.5],
+         [-size.w/2.5, -size.h*0.15, size.d/2.5], [size.w/2.5, -size.h*0.15, size.d/2.5]].forEach(pos => {
+            const leg = new THREE.Mesh(legGeo, legMat);
+            leg.position.set(pos[0], pos[1], pos[2]);
+            group.add(leg);
+        });
+        group.position.set(center.x, center.y, center.z);
+        return group;
+    }
+    
+    function createLemari(center, size, color, emissive, opacity = 1) {
+        const group = new THREE.Group();
+        const bodyGeo = new THREE.BoxGeometry(size.w, size.h, size.d);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xCD853F });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.set(0, 0, 0);
+        group.add(body);
+        
+        const doorGeo = new THREE.BoxGeometry(size.w*0.9, size.h*0.9, 0.05);
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+        const door = new THREE.Mesh(doorGeo, doorMat);
+        door.position.set(0, 0, size.d/2 + 0.03);
+        group.add(door);
+        
+        group.position.set(center.x, center.y, center.z);
+        return group;
+    }
+    
+    function createKulkas(center, size, color, emissive, opacity = 1) {
+        const group = new THREE.Group();
+        const bodyGeo = new THREE.BoxGeometry(size.w, size.h, size.d);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xF5F5F5 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.set(0, 0, 0);
+        group.add(body);
+        
+        const doorGeo = new THREE.BoxGeometry(size.w*0.85, size.h*0.45, 0.03);
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+        const freezerDoor = new THREE.Mesh(doorGeo, doorMat);
+        freezerDoor.position.set(0, size.h/3.5, size.d/2 + 0.02);
+        group.add(freezerDoor);
+        
+        const fridgeDoor = new THREE.Mesh(doorGeo, doorMat);
+        fridgeDoor.position.set(0, -size.h/4.5, size.d/2 + 0.02);
+        group.add(fridgeDoor);
+        
+        group.position.set(center.x, center.y, center.z);
+        return group;
+    }
+    
+    function createMobil(center, size, color, emissive, opacity = 1) {
+        const group = new THREE.Group();
+        const bodyGeo = new THREE.BoxGeometry(size.w, size.h*0.45, size.d);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xE74C3C });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.set(0, -size.h*0.1, 0);
+        group.add(body);
+        
+        const roofGeo = new THREE.BoxGeometry(size.w*0.65, size.h*0.28, size.d*0.8);
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0xC0392B });
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.set(0, size.h*0.15, 0);
+        group.add(roof);
+        
+        group.position.set(center.x, center.y, center.z);
+        return group;
+    }
+    
+    function createTV(center, size, color, emissive, opacity = 1) {
+        const group = new THREE.Group();
+        const bodyGeo = new THREE.BoxGeometry(size.w, size.h, size.d);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2C3E50 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.set(0, 0, 0);
+        group.add(body);
+        
+        const screenGeo = new THREE.BoxGeometry(size.w*0.85, size.h*0.8, 0.03);
+        const screenMat = new THREE.MeshStandardMaterial({ color: 0x1ABC9C, emissive: 0x1ABC9C, emissiveIntensity: 0.2 });
+        const screen = new THREE.Mesh(screenGeo, screenMat);
+        screen.position.set(0, 0, size.d/2 + 0.02);
+        group.add(screen);
+        
+        group.position.set(center.x, center.y, center.z);
+        return group;
+    }
+    
+    function createLaptop(center, size, color, emissive, opacity = 1) {
+        const group = new THREE.Group();
+        const baseGeo = new THREE.BoxGeometry(size.w, size.h*0.08, size.d);
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.set(0, -size.h*0.2, 0);
+        group.add(base);
+        
+        const screenGeo = new THREE.BoxGeometry(size.w*0.95, size.h*0.6, size.d*0.05);
+        const screenMat = new THREE.MeshStandardMaterial({ color: 0x2C3E50 });
+        const screen = new THREE.Mesh(screenGeo, screenMat);
+        screen.position.set(0, size.h*0.15, -size.d*0.05);
+        screen.rotation.x = -0.3;
+        group.add(screen);
+        
+        group.position.set(center.x, center.y, center.z);
+        return group;
+    }
+    
+    function createObject(shape, center, size, radius, color, emissive, opacity = 1) {
+        if(shape === 'segitiga') return createSegitiga(center, { w: size.w, h: size.h }, color, opacity);
+        if(shape === 'persegi') return createPersegi(center, { w: size.w, h: size.h }, color, opacity);
+        if(shape === 'lingkaran') return createLingkaran(center, { w: radius || size.w }, color, opacity);
+        if(shape === 'cube') return createCube(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+        if(shape === 'balok') return createBalok(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+        if(shape === 'prisma') return createPrisma(center, { w: size.w, h: size.h }, color, emissive, opacity);
+        if(shape === 'limas') return createLimas(center, { w: size.w, h: size.h }, color, emissive, opacity);
+        if(shape === 'bola') return createBola(center, radius, color, emissive, opacity);
+        if(shape === 'meja') return createMeja(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+        if(shape === 'kursi') return createKursi(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+        if(shape === 'lemari') return createLemari(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+        if(shape === 'kulkas') return createKulkas(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+        if(shape === 'mobil') return createMobil(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+        if(shape === 'tv') return createTV(center, { w: size.w, h: size.h, d: 0.2 }, color, emissive, opacity);
+        if(shape === 'laptop') return createLaptop(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+        return createCube(center, { w: size.w, h: size.h, d: size.d }, color, emissive, opacity);
+    }
+    
+    // ============= FUNGSI UTAMA =============
+    let mirrorPlane, mirrorLine, mirrorLineZ;
+    
+    function updateMirrorPlane(axis) {
+        if(mirrorPlane) scene.remove(mirrorPlane);
+        if(mirrorLine) scene.remove(mirrorLine);
+        if(mirrorLineZ) scene.remove(mirrorLineZ);
+        
+        const planeGeo = new THREE.PlaneGeometry(12, 10);
+        const mirrorMat = new THREE.MeshStandardMaterial({ color: 0x4488ff, side: THREE.DoubleSide, transparent: true, opacity: 0.1 });
+        mirrorPlane = new THREE.Mesh(planeGeo, mirrorMat);
+        mirrorPlane.position.set(0, 0, 0);
+        
+        const linePoints = [new THREE.Vector3(0, -5, 0), new THREE.Vector3(0, 5, 0)];
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+        mirrorLine = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xff6666 }));
+        
+        const linePointsZ = [new THREE.Vector3(0, 0, -5), new THREE.Vector3(0, 0, 5)];
+        const lineGeoZ = new THREE.BufferGeometry().setFromPoints(linePointsZ);
+        mirrorLineZ = new THREE.Line(lineGeoZ, new THREE.LineBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.3 }));
+        
+        if(axis === 'y') mirrorPlane.rotation.y = Math.PI / 2;
+        else if(axis === 'x') mirrorPlane.rotation.x = Math.PI / 2;
+        else if(axis === 'z') mirrorPlane.rotation.z = Math.PI / 2;
+        else if(axis === 'y=x') mirrorPlane.rotation.y = Math.PI / 4;
+        
+        scene.add(mirrorPlane);
+        scene.add(mirrorLine);
+        scene.add(mirrorLineZ);
+    }
+    
+    function adjustCameraToObject() {
+        const centerX = shapeData.center.x;
+        const centerY = shapeData.center.y;
+        const maxSize = Math.max(shapeData.size.w, shapeData.size.h, shapeData.size.d);
+        const distance = Math.max(5, Math.abs(centerX) + maxSize + 2, Math.abs(centerY) + maxSize + 2);
+        
+        controls.target.set(centerX, centerY, 0);
+        camera.position.set(centerX + distance * 0.8, centerY + distance * 0.6, distance);
+        controls.update();
+    }
+    
+    function updateVisuals() {
+        if(mainObject) scene.remove(mainObject);
+        if(reflectedObject) scene.remove(reflectedObject);
+        if(connectorLine) scene.remove(connectorLine);
+        
+        mainObject = createObject(currentShape, shapeData.center, shapeData.size, shapeData.radius, COLOR_ORIGINAL, COLOR_ORIGINAL_EMISSIVE, 1);
+        scene.add(mainObject);
+        
+        if(isReflected && reflectedCenter) {
+            reflectedObject = createObject(currentShape, reflectedCenter, shapeData.size, shapeData.radius, COLOR_REFLECTED, COLOR_REFLECTED_EMISSIVE, 0.75);
+            scene.add(reflectedObject);
+            
+            const linePoints = [new THREE.Vector3(shapeData.center.x, shapeData.center.y, shapeData.center.z), new THREE.Vector3(reflectedCenter.x, reflectedCenter.y, reflectedCenter.z)];
+            const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+            connectorLine = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xffaa66, transparent: true, opacity: 0.6 }));
+            scene.add(connectorLine);
+        }
+        
+        updateAxisLabels();
+        adjustCameraToObject();
+    }
+    
+    function applyShape() {
+        if (currentCategory === 'datar') {
+            const x = parseFloat(document.getElementById('datarX').value) || 0;
+            const y = parseFloat(document.getElementById('datarY').value) || 0;
+            const w = parseFloat(document.getElementById('datarW').value) || 1;
+            const h = parseFloat(document.getElementById('datarH').value) || 1;
+            
+            shapeData.center = { x: x, y: y, z: 0 };
+            shapeData.size = { w: w, h: h, d: 0.1 };
+            shapeData.radius = w;
+        } else {
+            const x = parseFloat(document.getElementById('ruangX').value) || 0;
+            const y = parseFloat(document.getElementById('ruangY').value) || 0;
+            const w = parseFloat(document.getElementById('ruangW').value) || 1;
+            const h = parseFloat(document.getElementById('ruangH').value) || 1;
+            const d = parseFloat(document.getElementById('ruangD').value) || 1;
+            
+            shapeData.center = { x: x, y: y, z: 0 };
+            shapeData.size = { w: w, h: h, d: d };
+            shapeData.radius = w / 2;
+        }
+        
+        isReflected = false;
+        reflectedCenter = null;
+        updateVisuals();
+        updatePreview();
+        
+        document.getElementById('hasil-text').innerHTML = '-';
+        document.getElementById('penyelesaianStep').innerHTML = 'Klik "Refleksikan" untuk melihat langkah-langkah';
+    }
+    
+    function resetShape() {
+        shapeData.center = { x: 0, y: 0, z: 0 };
+        
+        if (currentCategory === 'datar') {
+            document.getElementById('datarX').value = 0;
+            document.getElementById('datarY').value = 0;
+        } else {
+            document.getElementById('ruangX').value = 0;
+            document.getElementById('ruangY').value = 0;
+        }
+        
+        isReflected = false;
+        reflectedCenter = null;
+        updateVisuals();
+        updatePreview();
+        
+        document.getElementById('hasil-text').innerHTML = '-';
+        document.getElementById('penyelesaianStep').innerHTML = 'Klik "Refleksikan" untuk melihat langkah-langkah';
+    }
+    
+    function processReflection() {
+        const formula = getReflectionFormula(currentAxis);
+        reflectedCenter = reflectPoint(shapeData.center, currentAxis);
+        isReflected = true;
+        updateVisuals();
+        
+        document.getElementById('rumus-text').innerHTML = formula.rumus;
+        document.getElementById('formulaText').innerHTML = formula.rumus;
+        document.getElementById('hasil-text').innerHTML = `(${shapeData.center.x}, ${shapeData.center.y}) → (${reflectedCenter.x}, ${reflectedCenter.y})`;
+        
+        let steps = `
+            <div><strong>📌 Langkah-langkah pencerminan:</strong></div>
+            <div>1. Pusat objek di koordinat <span style="color:#10b981">(${shapeData.center.x}, ${shapeData.center.y})</span></div>
+            <div>2. Dicerminkan terhadap <span style="color:#ff6666">${currentAxis === 'y' ? 'Sumbu Y' : currentAxis === 'x' ? 'Sumbu X' : currentAxis === 'z' ? 'Sumbu Z' : 'Garis y = x'}</span></div>
+            <div>3. Rumus: <span style="color:#10b981">${formula.rumus}</span></div>
+            <div>4. Hasil: Pusat bayangan di <span style="color:#f59e0b">(${reflectedCenter.x}, ${reflectedCenter.y})</span></div>
+            <div>🎯 Objek berhasil direfleksikan!</div>
+        `;
+        document.getElementById('penyelesaianStep').innerHTML = steps;
+    }
+    
+    function changeShape(shape, category) {
+        currentShape = shape;
+        currentCategory = category;
+        
+        if (category === 'datar') {
+            document.getElementById('datarInput').style.display = 'block';
+            document.getElementById('ruangInput').style.display = 'none';
+            document.getElementById('datarX').value = shapeData.center.x;
+            document.getElementById('datarY').value = shapeData.center.y;
+            document.getElementById('datarW').value = shapeData.size.w;
+            document.getElementById('datarH').value = shapeData.size.h;
+        } else {
+            document.getElementById('datarInput').style.display = 'none';
+            document.getElementById('ruangInput').style.display = 'block';
+            document.getElementById('ruangX').value = shapeData.center.x;
+            document.getElementById('ruangY').value = shapeData.center.y;
+            document.getElementById('ruangW').value = shapeData.size.w;
+            document.getElementById('ruangH').value = shapeData.size.h;
+            document.getElementById('ruangD').value = shapeData.size.d;
+        }
+        
+        updatePreview();
+        resetShape();
+    }
+    
+    function addHelpers() {
+        const gridHelper = new THREE.GridHelper(16, 32, 0x88aaff, 0x335588);
+        gridHelper.position.y = -1.8;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = 0.25;
+        scene.add(gridHelper);
+        
+        const axesHelper = new THREE.AxesHelper(7);
+        axesHelper.material.transparent = true;
+        axesHelper.material.opacity = 0.35;
+        scene.add(axesHelper);
+        
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+        scene.add(ambientLight);
+        
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+        mainLight.position.set(4, 5, 3);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
+        
+        const fillLight = new THREE.PointLight(0x4466cc, 0.5);
+        fillLight.position.set(-2, 2, 2);
+        scene.add(fillLight);
+        
+        const backLight = new THREE.PointLight(0xffaa66, 0.3);
+        backLight.position.set(0, 2, -5);
+        scene.add(backLight);
+        
+        // Partikel dekorasi
+        const particleCount = 1000;
+        const particlesGeo = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            particlePositions[i*3] = (Math.random() - 0.5) * 20;
+            particlePositions[i*3+1] = (Math.random() - 0.5) * 15;
+            particlePositions[i*3+2] = (Math.random() - 0.5) * 15 - 5;
+        }
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particlesMat = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.04, transparent: true, opacity: 0.35 });
+        const particles = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particles);
+    }
+    
+    function handleResize() {
+        const { width, height } = resizeCanvas();
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+        if(labelRenderer) labelRenderer.setSize(width, height);
+        adjustCameraToObject();
+    }
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+        if(labelRenderer) labelRenderer.render(scene, camera);
+    }
+    
+    function init() {
+        addHelpers();
+        updateMirrorPlane('y');
+        updateVisuals();
+        animate();
+        
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => setTimeout(handleResize, 100));
+        
+        // Input preview
+        document.getElementById('datarX').addEventListener('input', updatePreview);
+        document.getElementById('datarY').addEventListener('input', updatePreview);
+        document.getElementById('datarW').addEventListener('input', updatePreview);
+        document.getElementById('datarH').addEventListener('input', updatePreview);
+        document.getElementById('ruangX').addEventListener('input', updatePreview);
+        document.getElementById('ruangY').addEventListener('input', updatePreview);
+        document.getElementById('ruangW').addEventListener('input', updatePreview);
+        document.getElementById('ruangH').addEventListener('input', updatePreview);
+        document.getElementById('ruangD').addEventListener('input', updatePreview);
+        
+        // Shape buttons
+        document.getElementById('shapeSegitiga').addEventListener('click', () => { changeShape('segitiga', 'datar'); setActiveButton('shapeSegitiga'); });
+        document.getElementById('shapePersegi').addEventListener('click', () => { changeShape('persegi', 'datar'); setActiveButton('shapePersegi'); });
+        document.getElementById('shapeLingkaran').addEventListener('click', () => { changeShape('lingkaran', 'datar'); setActiveButton('shapeLingkaran'); });
+        document.getElementById('shapeCube').addEventListener('click', () => { changeShape('cube', 'ruang'); setActiveButton('shapeCube'); });
+        document.getElementById('shapeBalok').addEventListener('click', () => { changeShape('balok', 'ruang'); setActiveButton('shapeBalok'); });
+        document.getElementById('shapePrisma').addEventListener('click', () => { changeShape('prisma', 'ruang'); setActiveButton('shapePrisma'); });
+        document.getElementById('shapeLimas').addEventListener('click', () => { changeShape('limas', 'ruang'); setActiveButton('shapeLimas'); });
+        document.getElementById('shapeBola').addEventListener('click', () => { changeShape('bola', 'ruang'); setActiveButton('shapeBola'); });
+        document.getElementById('shapeMeja').addEventListener('click', () => { changeShape('meja', 'ruang'); setActiveButton('shapeMeja'); });
+        document.getElementById('shapeKursi').addEventListener('click', () => { changeShape('kursi', 'ruang'); setActiveButton('shapeKursi'); });
+        document.getElementById('shapeLemari').addEventListener('click', () => { changeShape('lemari', 'ruang'); setActiveButton('shapeLemari'); });
+        document.getElementById('shapeKulkas').addEventListener('click', () => { changeShape('kulkas', 'ruang'); setActiveButton('shapeKulkas'); });
+        document.getElementById('shapeMobil').addEventListener('click', () => { changeShape('mobil', 'ruang'); setActiveButton('shapeMobil'); });
+        document.getElementById('shapeTV').addEventListener('click', () => { changeShape('tv', 'ruang'); setActiveButton('shapeTV'); });
+        document.getElementById('shapeLaptop').addEventListener('click', () => { changeShape('laptop', 'ruang'); setActiveButton('shapeLaptop'); });
+        
+        function setActiveButton(buttonId) {
+            document.querySelectorAll('.shape-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(buttonId).classList.add('active');
+        }
+        
+        document.getElementById('applyShapeBtn').addEventListener('click', applyShape);
+        document.getElementById('resetShapeBtn').addEventListener('click', resetShape);
+        document.getElementById('reflectBtn').addEventListener('click', processReflection);
+        
+        document.querySelectorAll('.mirror-type').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mirror-type').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentAxis = btn.dataset.axis;
+                const formulas = { 'y': '(x, y, z) → (-x, y, z)', 'x': '(x, y, z) → (x, -y, z)', 'z': '(x, y, z) → (x, y, -z)', 'y=x': '(x, y, z) → (y, x, z)' };
+                document.getElementById('formulaText').innerHTML = formulas[currentAxis];
+                if(isReflected) processReflection();
+            });
+        });
+        
+        console.log('✅ RefleksiMaster siap digunakan di HP! Mode Landscape siap!');
+    }
+    
+    init();
+</script>
+</body>
+</html>
